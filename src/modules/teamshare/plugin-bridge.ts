@@ -1,16 +1,23 @@
 import * as vscode from "vscode";
 import * as fs from "fs";
+import * as os from "os";
 import * as path from "path";
 import type { ExtensionModule } from "../../types";
 import { log } from "../../utils";
 
 // ─── Claude Code Plugin Bridge ─────────────────────────────────────
 // On VS Code extension activate:
-// 1. Copies claude-plugin/ to a location Claude Code can discover
-// 2. Registers the plugin in Claude Code settings if needed
+// 1. Copies claude-plugin/ to ~/.claude/custom-plugins/teamshare/
+// 2. Adds shell function to ~/.zshrc / ~/.bashrc so `claude` auto-loads plugin
 // 3. Sets up .teamshare/ in the workspace
+//
+// Result: user installs VS Code extension → opens terminal → `claude` just works
+// with /teamshare:* commands available.
 
 const PLUGIN_NAME = "teamshare";
+const PLUGIN_DIR_NAME = "custom-plugins";
+const SHELL_MARKER = "# >>> oh-my-claude-gang >>>";
+const SHELL_MARKER_END = "# <<< oh-my-claude-gang <<<";
 
 export const pluginBridgeModule: ExtensionModule = {
   id: "pluginBridge",
@@ -24,38 +31,57 @@ export const pluginBridgeModule: ExtensionModule = {
     const projectRoot = workspaceFolders[0].uri.fsPath;
     const extensionPath = context.extensionPath;
     const pluginSourceDir = path.join(extensionPath, "claude-plugin");
+    const pluginDestDir = path.join(getClaudeConfigDir(), PLUGIN_DIR_NAME, PLUGIN_NAME);
 
-    // 1. Copy plugin to user's Claude plugins directory
-    const claudePluginsDir = path.join(getClaudeConfigDir(), "plugins", "cache", PLUGIN_NAME);
+    // 1. Copy plugin files
     try {
-      copyDirRecursive(pluginSourceDir, claudePluginsDir);
-      makeHooksExecutable(path.join(claudePluginsDir, "hooks"));
-      log(`Claude plugin installed to ${claudePluginsDir}`);
+      copyDirRecursive(pluginSourceDir, pluginDestDir);
+      makeHooksExecutable(path.join(pluginDestDir, "hooks"));
+      log(`Plugin installed to ${pluginDestDir}`);
     } catch (err) {
-      log(`Failed to install Claude plugin: ${err}`, "error");
+      log(`Failed to install plugin: ${err}`, "error");
     }
 
-    // 2. Register plugin in Claude Code settings
-    registerPluginInSettings(claudePluginsDir);
+    // 2. Add shell wrapper so `claude` auto-loads the plugin
+    const shellConfigured = addShellWrapper(pluginDestDir);
+    if (shellConfigured) {
+      log("Shell wrapper added - `claude` will auto-load teamshare plugin");
+    }
 
-    // 3. Ensure .teamshare/ exists in workspace
+    // 3. Ensure .teamshare/ in workspace
     ensureTeamShareDir(projectRoot);
 
-    // 4. Show status
+    // 4. Configure VS Code terminal to include --plugin-dir
+    configureVSCodeTerminal(pluginDestDir);
+
+    // 5. Status bar
     const statusItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 50);
     statusItem.text = "$(people) TeamShare";
-    statusItem.tooltip = "TeamShare session intelligence active";
-    statusItem.command = "shareMyClaudeMax.sessions.search";
+    statusItem.tooltip = "Oh My Claude Gang - TeamShare active\nClick to search sessions";
+    statusItem.command = "shareMyClaudeMax.search";
     statusItem.show();
 
     context.subscriptions.push(statusItem);
 
-    log("Plugin bridge activated - Claude Code commands available");
+    // 6. Show welcome message on first install
+    const isFirstInstall = !context.globalState.get("teamshare.installed");
+    if (isFirstInstall) {
+      context.globalState.update("teamshare.installed", true);
+      const action = await vscode.window.showInformationMessage(
+        "Oh My Claude Gang installed! Open a new terminal and run `claude` — /teamshare commands are ready.",
+        "Open Terminal"
+      );
+      if (action === "Open Terminal") {
+        vscode.commands.executeCommand("workbench.action.terminal.new");
+      }
+    }
+
+    log("Plugin bridge activated");
   },
 };
 
 function getClaudeConfigDir(): string {
-  const home = process.env["HOME"] ?? process.env["USERPROFILE"] ?? "";
+  const home = os.homedir();
   return path.join(home, ".claude");
 }
 
@@ -63,13 +89,10 @@ function copyDirRecursive(src: string, dest: string): void {
   if (!fs.existsSync(src)) {
     return;
   }
-
   fs.mkdirSync(dest, { recursive: true });
-
   for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
     const srcPath = path.join(src, entry.name);
     const destPath = path.join(dest, entry.name);
-
     if (entry.isDirectory()) {
       copyDirRecursive(srcPath, destPath);
     } else {
@@ -83,41 +106,80 @@ function makeHooksExecutable(hooksDir: string): void {
     return;
   }
   for (const file of fs.readdirSync(hooksDir)) {
-    if (file.endsWith(".sh")) {
+    if (file.endsWith(".sh") || file.endsWith(".py")) {
       fs.chmodSync(path.join(hooksDir, file), 0o755);
     }
   }
 }
 
-function registerPluginInSettings(pluginDir: string): void {
-  // The plugin hooks are in the plugin dir itself (hooks.json)
-  // Claude Code auto-discovers plugins from the plugin dir
-  // We just need to register the install path
+// ─── Shell Wrapper ─────────────────────────────────────────────────
+// Adds a shell function that wraps `claude` to auto-include --plugin-dir.
+// Supports zsh and bash. Idempotent (checks for marker before adding).
 
-  const installedPlugins = path.join(getClaudeConfigDir(), "plugins", "installed_plugins.json");
-  try {
-    let installed: Record<string, unknown> = { version: 2, plugins: {} };
-    if (fs.existsSync(installedPlugins)) {
-      installed = JSON.parse(fs.readFileSync(installedPlugins, "utf-8"));
+function addShellWrapper(pluginDir: string): boolean {
+  const home = os.homedir();
+  const shellConfigs = [
+    path.join(home, ".zshrc"),
+    path.join(home, ".bashrc"),
+  ];
+
+  const snippet = `
+${SHELL_MARKER}
+# Auto-load Oh My Claude Gang plugin with Claude Code
+claude() {
+  command claude --plugin-dir "${pluginDir}" "$@"
+}
+${SHELL_MARKER_END}
+`;
+
+  let configured = false;
+
+  for (const configPath of shellConfigs) {
+    if (!fs.existsSync(configPath)) {
+      continue;
     }
 
-    const plugins = (installed["plugins"] ?? {}) as Record<string, unknown[]>;
-    if (!plugins[PLUGIN_NAME]) {
-      plugins[PLUGIN_NAME] = [
-        {
-          scope: "user",
-          installPath: pluginDir,
-          version: "0.1.0",
-          installedAt: new Date().toISOString(),
-          lastUpdated: new Date().toISOString(),
-        },
-      ];
-      installed["plugins"] = plugins;
-      fs.writeFileSync(installedPlugins, JSON.stringify(installed, null, 2));
-      log("Registered teamshare plugin in Claude Code");
+    const content = fs.readFileSync(configPath, "utf-8");
+
+    // Already configured
+    if (content.includes(SHELL_MARKER)) {
+      // Update path if changed
+      if (!content.includes(pluginDir)) {
+        const updated = content.replace(
+          new RegExp(`${escapeRegex(SHELL_MARKER)}[\\s\\S]*?${escapeRegex(SHELL_MARKER_END)}`),
+          snippet.trim()
+        );
+        fs.writeFileSync(configPath, updated);
+        log(`Updated plugin path in ${configPath}`);
+      }
+      configured = true;
+      continue;
     }
-  } catch (err) {
-    log(`Failed to register plugin: ${err}`, "warn");
+
+    // Add new
+    fs.appendFileSync(configPath, snippet);
+    configured = true;
+    log(`Added shell wrapper to ${configPath}`);
+  }
+
+  return configured;
+}
+
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+// ─── VS Code Terminal Config ───────────────────────────────────────
+// Configure VS Code integrated terminal to auto-load plugin.
+
+function configureVSCodeTerminal(pluginDir: string): void {
+  const config = vscode.workspace.getConfiguration("terminal.integrated");
+  const currentEnv = config.get<Record<string, string>>("env.osx") ?? {};
+
+  // Set env var that our shell wrapper can use
+  if (!currentEnv["CLAUDE_TEAMSHARE_PLUGIN_DIR"]) {
+    const updatedEnv = { ...currentEnv, CLAUDE_TEAMSHARE_PLUGIN_DIR: pluginDir };
+    config.update("env.osx", updatedEnv, vscode.ConfigurationTarget.Global);
   }
 }
 
@@ -129,12 +191,10 @@ function ensureTeamShareDir(projectRoot: string): void {
     path.join(teamshareDir, "sessions", "vectors"),
     path.join(teamshareDir, "search"),
   ];
-
   for (const dir of dirs) {
     fs.mkdirSync(dir, { recursive: true });
   }
 
-  // Ensure in .gitignore
   const gitignorePath = path.join(projectRoot, ".gitignore");
   try {
     const content = fs.existsSync(gitignorePath) ? fs.readFileSync(gitignorePath, "utf-8") : "";
