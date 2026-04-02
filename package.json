@@ -2,7 +2,7 @@
   "name": "oh-my-claude-gang",
   "displayName": "Oh My Claude Gang",
   "description": "Turn your team's Claude Code sessions into shared intelligence. Auto-track who's coding what, search across all sessions, prevent file conflicts — zero config.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": "NorwayIsHere",
   "license": "MIT",
   "repository": {
