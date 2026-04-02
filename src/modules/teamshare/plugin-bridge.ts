@@ -45,7 +45,7 @@ export const pluginBridgeModule: ExtensionModule = {
     const statusItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 50);
     statusItem.text = "$(people) TeamShare";
     statusItem.tooltip = "TeamShare session intelligence active";
-    statusItem.command = "myExtension.sessions.search";
+    statusItem.command = "shareMyClaudeMax.sessions.search";
     statusItem.show();
 
     context.subscriptions.push(statusItem);

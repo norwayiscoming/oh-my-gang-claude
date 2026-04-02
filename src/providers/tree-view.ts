@@ -82,7 +82,7 @@ function createSampleData(): TreeNode[] {
           label: "Read the README",
           iconPath: new vscode.ThemeIcon("book"),
           command: {
-            command: "myExtension.helloWorld",
+            command: "shareMyClaudeMax.helloWorld",
             title: "Hello",
           },
         },
@@ -111,7 +111,7 @@ export const treeViewModule: ExtensionModule = {
     const provider = new BaseTreeDataProvider();
     provider.setRoots(createSampleData());
 
-    const treeView = vscode.window.createTreeView("myExtension.treeView", {
+    const treeView = vscode.window.createTreeView("shareMyClaudeMax.treeView", {
       treeDataProvider: provider,
       showCollapseAll: true,
     });

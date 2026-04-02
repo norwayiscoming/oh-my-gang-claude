@@ -25,7 +25,7 @@ export class BaseCodeLensProvider implements vscode.CodeLensProvider {
   resolveCodeLens(codeLens: vscode.CodeLens, _token: vscode.CancellationToken): vscode.CodeLens {
     codeLens.command = codeLens.command ?? {
       title: "Action",
-      command: "myExtension.helloWorld",
+      command: "shareMyClaudeMax.helloWorld",
     };
     return codeLens;
   }

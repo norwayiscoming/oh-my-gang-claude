@@ -24,12 +24,12 @@ export function log(message: string, level: "debug" | "info" | "warn" | "error" 
 // ─── Configuration ─────────────────────────────────────────────────
 
 export function getConfig<T>(key: string, defaultValue: T): T {
-  return vscode.workspace.getConfiguration("myExtension").get<T>(key, defaultValue);
+  return vscode.workspace.getConfiguration("shareMyClaudeMax").get<T>(key, defaultValue);
 }
 
 export function onConfigChange(callback: (e: vscode.ConfigurationChangeEvent) => void): vscode.Disposable {
   return vscode.workspace.onDidChangeConfiguration((e) => {
-    if (e.affectsConfiguration("myExtension")) {
+    if (e.affectsConfiguration("shareMyClaudeMax")) {
       callback(e);
     }
   });

@@ -70,7 +70,7 @@ export const statusBarModule: ExtensionModule = {
     manager.create("main", {
       text: "$(zap) My Extension",
       tooltip: "My Extension is active",
-      command: "myExtension.helloWorld",
+      command: "shareMyClaudeMax.helloWorld",
     });
     manager.show("main");
 

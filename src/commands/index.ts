@@ -8,16 +8,16 @@ import { log } from "../utils";
 
 const commands: CommandDefinition[] = [
   {
-    id: "myExtension.helloWorld",
+    id: "shareMyClaudeMax.helloWorld",
     handler: () => {
       vscode.window.showInformationMessage("Hello from My Extension!");
       log("Hello World command executed");
     },
   },
   {
-    id: "myExtension.showPanel",
+    id: "shareMyClaudeMax.showPanel",
     handler: () => {
-      vscode.commands.executeCommand("myExtension.webviewView.focus");
+      vscode.commands.executeCommand("shareMyClaudeMax.webviewView.focus");
     },
   },
 ];

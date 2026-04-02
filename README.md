@@ -1,130 +1,89 @@
-# VS Code Extension Template
+# Share My Claude Max
 
-A production-ready, modular VS Code extension template with TypeScript + esbuild. Designed for extensibility, AI-assisted development, and fast marketplace publishing.
+> Your team's Claude Code sessions, connected.
 
-## Features
+When multiple people use Claude Code on the same project, nobody knows what anyone else is doing. You duplicate work, edit the same files, and waste tokens re-explaining context that another session already figured out.
 
-- **Modular architecture** - Every feature is a plug-and-play module
-- **Extensible base classes** - Inherit and override, or use directly
-- **esbuild bundling** - Fast builds, small package size
-- **Full type safety** - Strict TypeScript with declaration maps
-- **Test infrastructure** - Mocha + @vscode/test-electron ready to go
-- **Webview support** - Sidebar panels and editor panels with CSP, messaging, state
-- **Tree view** - Generic tree data provider with refresh support
-- **Status bar** - Manager for creating/updating status bar items
-- **Configuration** - Reactive config manager with change events
-- **AI-friendly** - CLAUDE.md + SPECS.md for AI-assisted coding
+**Share My Claude Max** fixes this by making every Claude Code session visible, searchable, and aware of each other.
 
-## Quick Start
+## What it does
 
-```bash
-# Clone the template
-git clone https://github.com/your-org/vs-code-extension-template.git my-extension
-cd my-extension
+### For Claude (auto, zero config)
+When you install this extension, Claude Code automatically:
+- **Knows who's on the team** — sees all active sessions and what they're working on
+- **Tracks what was done** — auto-generates session summaries from tool calls (0 tokens)
+- **Avoids conflicts** — knows which files other sessions are editing
+- **Searches past work** — finds relevant context from any team member's sessions
 
-# Install dependencies
-npm install
-
-# Open in VS Code
-code .
-
-# Press F5 to run the extension in a new VS Code window
+### For you (slash commands)
+```
+/teamshare:who          → See who's actively coding and what they're doing
+/teamshare:search auth  → Find sessions about authentication across all users
+/teamshare:summary      → View summary of any session
+/teamshare:identify     → Set your name so teammates see you
+/teamshare:index        → Scan & index all existing Claude Code sessions
 ```
 
-## Customize
-
-### 1. Update Identity
-
-In `package.json`, change:
-- `name` - your extension's ID (lowercase, hyphens)
-- `displayName` - human-readable name
-- `publisher` - your VS Code marketplace publisher ID
-- `description` - what your extension does
-- `repository` - your repo URL
-
-### 2. Rename Prefixes
-
-Replace all occurrences of `myExtension` with your extension's prefix:
-- Command IDs: `myExtension.helloWorld` → `yourExt.helloWorld`
-- Config keys: `myExtension.enabled` → `yourExt.enabled`
-- View IDs: `myExtension.treeView` → `yourExt.treeView`
-
-### 3. Add Your Features
-
-```typescript
-// src/commands/index.ts - Add a command
-const commands: CommandDefinition[] = [
-  {
-    id: "yourExt.doSomething",
-    handler: () => { /* your logic */ },
-  },
-];
-
-// src/providers/tree-view.ts - Customize tree data
-provider.setRoots([
-  { id: "item1", label: "Your Item", iconPath: new vscode.ThemeIcon("file") },
-]);
-```
-
-### 4. Enable Optional Modules
-
-In each provider file, uncomment the registration code in the module's `activate()` method:
-- `src/providers/completion.ts` - Autocomplete suggestions
-- `src/providers/code-lens.ts` - Inline code annotations
-- `src/providers/code-actions.ts` - Quick fixes and refactors
-- `src/providers/decorations.ts` - Text highlighting
-
-## Architecture
+## How it works
 
 ```
-src/extension.ts          ← Module registry (add/remove features here)
-src/types/                ← Shared interfaces
-src/utils/                ← Logging, config helpers, webview utilities
-src/config/               ← Reactive configuration manager
-src/commands/             ← Command handlers
-src/statusbar/            ← Status bar management
-src/providers/            ← All VS Code providers (tree, webview, completion, etc.)
-src/test/                 ← Test infrastructure
-media/                    ← Icons, webview CSS/JS
+You install extension → VS Code activates → Claude Code plugin auto-registers
+                                                    ↓
+                                    Hooks start tracking:
+                                    • SessionStart → register in .teamshare/
+                                    • PostToolUse → track files & commands
+                                    • Stop → generate summary + update index
+                                                    ↓
+                                    Your Claude session now:
+                                    • Knows Brian is editing src/auth.ts
+                                    • Can search what Anh did yesterday
+                                    • Won't duplicate work already done
 ```
 
-Every feature implements `ExtensionModule`:
+## Search (3-layer, fast)
 
-```typescript
-interface ExtensionModule {
-  readonly id: string;
-  activate(context: vscode.ExtensionContext): void | Promise<void>;
-  deactivate?(): void | Promise<void>;
-}
+| Layer | How | Cost | When |
+|-------|-----|------|------|
+| **Structured** | Filter by user, branch, time, files | Free, instant | Always |
+| **Keyword** | Inverted index + grep summaries | Free, instant | Always |
+| **Semantic** | Embedding similarity (OpenAI/Ollama) | Optional, background | When L1+L2 return 0 |
+
+## Summary (living document, minimal tokens)
+
+Summaries update in real-time as sessions progress:
+
+| Operation | Trigger | Token cost |
+|-----------|---------|------------|
+| **INSERT** | New file edited, new command run | 0 (parsed from tool calls) |
+| **ALTER** | Focus changed, status updated | 0 (parsed from events) |
+| **REWRITE** | Session end (AI consolidates) | ~500 tokens, once |
+
+## Data stored in `.teamshare/`
+
+```
+.teamshare/                          ← git-ignored, local to project
+├── config.json                      ← Your identity (name, role)
+├── sessions/
+│   ├── registry.json                ← All sessions metadata
+│   └── summaries/{id}.json          ← Per-session summaries
+└── search/
+    ├── keyword-index.json           ← keyword → session IDs
+    └── file-index.json              ← file path → session IDs
 ```
 
-See [SPECS.md](SPECS.md) for full architecture documentation.
-See [CLAUDE.md](CLAUDE.md) for AI-assisted development instructions.
+## Settings
 
-## Scripts
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `shareMyClaudeMax.enabled` | `true` | Enable/disable |
+| `shareMyClaudeMax.embedding.provider` | `"none"` | `none`, `openai`, or `ollama` |
+| `shareMyClaudeMax.embedding.model` | `text-embedding-3-small` | Embedding model |
 
-| Script | Description |
-|--------|-------------|
-| `npm run compile` | Type-check, lint, and bundle |
-| `npm run watch` | Watch mode (esbuild + tsc in parallel) |
-| `npm run package` | Production build (minified) |
-| `npm run lint` | Run ESLint |
-| `npm test` | Run tests in VS Code |
-| `npm run check-types` | TypeScript type checking only |
+## Requirements
 
-## Publishing
-
-```bash
-# Install the VS Code Extension CLI
-npm install -g @vscode/vsce
-
-# Package as .vsix
-vsce package
-
-# Publish to marketplace
-vsce publish
-```
+- VS Code 1.96+
+- Claude Code CLI installed
 
 ## License
 
-MIT - See [LICENSE](LICENSE) for details.
+MIT

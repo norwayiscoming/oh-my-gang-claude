@@ -20,7 +20,7 @@ class ConfigManager {
   }
 
   reload(): void {
-    const ws = vscode.workspace.getConfiguration("myExtension");
+    const ws = vscode.workspace.getConfiguration("shareMyClaudeMax");
     this._config = {
       enabled: ws.get<boolean>("enabled", true),
       logLevel: ws.get<ExtensionConfig["logLevel"]>("logLevel", "info"),
@@ -33,7 +33,7 @@ class ConfigManager {
     value: ExtensionConfig[K],
     target = vscode.ConfigurationTarget.Global
   ): Promise<void> {
-    await vscode.workspace.getConfiguration("myExtension").update(key, value, target);
+    await vscode.workspace.getConfiguration("shareMyClaudeMax").update(key, value, target);
     // `onDidChangeConfiguration` will trigger `reload()` via the module
   }
 
@@ -51,7 +51,7 @@ export const configModule: ExtensionModule = {
   activate(context) {
     context.subscriptions.push(
       vscode.workspace.onDidChangeConfiguration((e) => {
-        if (e.affectsConfiguration("myExtension")) {
+        if (e.affectsConfiguration("shareMyClaudeMax")) {
           configManager.reload();
           log("Configuration reloaded");
         }

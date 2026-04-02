@@ -17,12 +17,12 @@ suite("Extension Test Suite", () => {
 
   test("Should register commands", async () => {
     const commands = await vscode.commands.getCommands(true);
-    assert.ok(commands.includes("myExtension.helloWorld"));
-    assert.ok(commands.includes("myExtension.showPanel"));
+    assert.ok(commands.includes("shareMyClaudeMax.helloWorld"));
+    assert.ok(commands.includes("shareMyClaudeMax.showPanel"));
   });
 
   test("Hello World command should show message", async () => {
     // This tests that the command executes without throwing.
-    await vscode.commands.executeCommand("myExtension.helloWorld");
+    await vscode.commands.executeCommand("shareMyClaudeMax.helloWorld");
   });
 });

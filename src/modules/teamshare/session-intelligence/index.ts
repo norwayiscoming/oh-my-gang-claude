@@ -43,9 +43,9 @@ export const sessionIntelligenceModule: ExtensionModule = {
 
     // ─── Embedding (optional) ────────────────────────────────────
     const embeddingConfig: EmbeddingConfig = {
-      provider: getConfig("teamshare.sessionIntelligence.embedding.provider", "none") as EmbeddingConfig["provider"],
-      model: getConfig("teamshare.sessionIntelligence.embedding.model", "text-embedding-3-small"),
-      dimensions: getConfig("teamshare.sessionIntelligence.embedding.dimensions", 256),
+      provider: getConfig("shareMyClaudeMax.embedding.provider", "none") as EmbeddingConfig["provider"],
+      model: getConfig("shareMyClaudeMax.embedding.model", "text-embedding-3-small"),
+      dimensions: getConfig("shareMyClaudeMax.embedding.dimensions", 256),
     };
 
     const embeddingManager = new EmbeddingManager(projectRoot, embeddingConfig);
@@ -58,7 +58,7 @@ export const sessionIntelligenceModule: ExtensionModule = {
     const treeProvider = new SessionTreeProvider(projectRoot);
     treeProvider.startAutoRefresh(15000);
 
-    const treeView = vscode.window.createTreeView("myExtension.sessionTree", {
+    const treeView = vscode.window.createTreeView("shareMyClaudeMax.sessionTree", {
       treeDataProvider: treeProvider,
       showCollapseAll: true,
     });
@@ -68,17 +68,17 @@ export const sessionIntelligenceModule: ExtensionModule = {
 
     // ─── Commands ────────────────────────────────────────────────
     const searchCmd = vscode.commands.registerCommand(
-      "myExtension.sessions.search",
+      "shareMyClaudeMax.sessions.search",
       () => searchView.show()
     );
 
     const refreshCmd = vscode.commands.registerCommand(
-      "myExtension.sessions.refresh",
+      "shareMyClaudeMax.sessions.refresh",
       () => treeProvider.refresh()
     );
 
     const reindexCmd = vscode.commands.registerCommand(
-      "myExtension.sessions.reindex",
+      "shareMyClaudeMax.sessions.reindex",
       () => {
         searchPipeline.rebuildIndices();
         vscode.window.showInformationMessage("Search indices rebuilt");
@@ -86,7 +86,7 @@ export const sessionIntelligenceModule: ExtensionModule = {
     );
 
     const identifyCmd = vscode.commands.registerCommand(
-      "myExtension.sessions.identify",
+      "shareMyClaudeMax.sessions.identify",
       async () => {
         const { writeConfig } = await import("./identity/config");
         const user = await vscode.window.showInputBox({
@@ -112,7 +112,7 @@ export const sessionIntelligenceModule: ExtensionModule = {
     );
 
     const indexSessionCmd = vscode.commands.registerCommand(
-      "myExtension.sessions.indexFile",
+      "shareMyClaudeMax.sessions.indexFile",
       async (fileUri: vscode.Uri) => {
         if (!fileUri) {
           const uris = await vscode.window.showOpenDialog({
