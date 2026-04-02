@@ -1,20 +1,20 @@
 {
-  "name": "teamshare",
-  "displayName": "TeamShare - Claude Code Session Intelligence",
+  "name": "oh-my-gang-claude",
+  "displayName": "Oh My Gang Claude",
   "description": "Multi-user session intelligence for Claude Code. Track who's doing what, search across sessions, prevent conflicts.",
   "version": "0.1.0",
   "publisher": "NorwayIsHere",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/norwayiscoming/claude-teamshare-extension"
+    "url": "https://github.com/norwayiscoming/oh-my-gang-claude"
   },
-  "homepage": "https://github.com/norwayiscoming/claude-teamshare-extension#readme",
+  "homepage": "https://github.com/norwayiscoming/oh-my-gang-claude#readme",
   "bugs": {
-    "url": "https://github.com/norwayiscoming/claude-teamshare-extension/issues"
+    "url": "https://github.com/norwayiscoming/oh-my-gang-claude/issues"
   },
   "engines": {
-    "vscode": "^1.100.0"
+    "vscode": "^1.96.0"
   },
   "categories": [
     "Other",
@@ -116,7 +116,12 @@
         "myExtension.logLevel": {
           "type": "string",
           "default": "info",
-          "enum": ["debug", "info", "warn", "error"],
+          "enum": [
+            "debug",
+            "info",
+            "warn",
+            "error"
+          ],
           "description": "Set the logging level"
         },
         "teamshare.sessionIntelligence.enabled": {
@@ -127,7 +132,12 @@
         "teamshare.sessionIntelligence.embedding.provider": {
           "type": "string",
           "default": "none",
-          "enum": ["none", "openai", "ollama", "voyage"],
+          "enum": [
+            "none",
+            "openai",
+            "ollama",
+            "voyage"
+          ],
           "description": "Embedding provider for semantic search (optional)"
         },
         "teamshare.sessionIntelligence.embedding.model": {
@@ -180,7 +190,7 @@
     "@stylistic/eslint-plugin": "^2.9.0",
     "@types/mocha": "^10.0.1",
     "@types/node": "^22",
-    "@types/vscode": "^1.100.0",
+    "@types/vscode": "^1.96.0",
     "@vscode/test-cli": "^0.0.10",
     "@vscode/test-electron": "^2.4.1",
     "esbuild": "^0.25.0",
@@ -189,6 +199,5 @@
     "npm-run-all": "^4.1.5",
     "typescript": "^5.8.2",
     "typescript-eslint": "^8.26.0"
-  },
-  "dependencies": {}
+  }
 }
