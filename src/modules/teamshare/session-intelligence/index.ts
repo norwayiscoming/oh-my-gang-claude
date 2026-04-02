@@ -58,7 +58,7 @@ export const sessionIntelligenceModule: ExtensionModule = {
     const treeProvider = new SessionTreeProvider(projectRoot);
     treeProvider.startAutoRefresh(15000);
 
-    const treeView = vscode.window.createTreeView("shareMyClaudeMax.sessionTree", {
+    const treeView = vscode.window.createTreeView("shareMyClaudeMax.sessions", {
       treeDataProvider: treeProvider,
       showCollapseAll: true,
     });

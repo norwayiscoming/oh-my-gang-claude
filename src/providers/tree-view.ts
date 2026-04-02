@@ -111,7 +111,7 @@ export const treeViewModule: ExtensionModule = {
     const provider = new BaseTreeDataProvider();
     provider.setRoots(createSampleData());
 
-    const treeView = vscode.window.createTreeView("shareMyClaudeMax.treeView", {
+    const treeView = vscode.window.createTreeView("shareMyClaudeMax.sessions", {
       treeDataProvider: provider,
       showCollapseAll: true,
     });

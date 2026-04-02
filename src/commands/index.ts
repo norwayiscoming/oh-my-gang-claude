@@ -17,7 +17,7 @@ const commands: CommandDefinition[] = [
   {
     id: "shareMyClaudeMax.showPanel",
     handler: () => {
-      vscode.commands.executeCommand("shareMyClaudeMax.webviewView.focus");
+      vscode.commands.executeCommand("shareMyClaudeMax.details.focus");
     },
   },
 ];

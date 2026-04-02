@@ -84,7 +84,7 @@ export const webviewViewModule: ExtensionModule = {
   activate(context) {
     const provider = new BaseWebviewViewProvider(context.extensionUri);
     context.subscriptions.push(
-      vscode.window.registerWebviewViewProvider("shareMyClaudeMax.webviewView", provider)
+      vscode.window.registerWebviewViewProvider("shareMyClaudeMax.details", provider)
     );
     log("Webview view registered");
   },

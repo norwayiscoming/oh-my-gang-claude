@@ -23,17 +23,11 @@ export const pluginBridgeModule: ExtensionModule = {
   id: "pluginBridge",
 
   async activate(context) {
-    const workspaceFolders = vscode.workspace.workspaceFolders;
-    if (!workspaceFolders || workspaceFolders.length === 0) {
-      return;
-    }
-
-    const projectRoot = workspaceFolders[0].uri.fsPath;
     const extensionPath = context.extensionPath;
     const pluginSourceDir = path.join(extensionPath, "claude-plugin");
     const pluginDestDir = path.join(getClaudeConfigDir(), PLUGIN_DIR_NAME, PLUGIN_NAME);
 
-    // 1. Copy plugin files
+    // 1. Always copy plugin files (no workspace needed)
     try {
       copyDirRecursive(pluginSourceDir, pluginDestDir);
       makeHooksExecutable(path.join(pluginDestDir, "hooks"));
@@ -42,17 +36,20 @@ export const pluginBridgeModule: ExtensionModule = {
       log(`Failed to install plugin: ${err}`, "error");
     }
 
-    // 2. Add shell wrapper so `claude` auto-loads the plugin
+    // 2. Always add shell wrapper (no workspace needed)
     const shellConfigured = addShellWrapper(pluginDestDir);
     if (shellConfigured) {
       log("Shell wrapper added - `claude` will auto-load teamshare plugin");
     }
 
-    // 3. Ensure .teamshare/ in workspace
-    ensureTeamShareDir(projectRoot);
-
-    // 4. Configure VS Code terminal to include --plugin-dir
+    // 3. Configure VS Code terminal
     configureVSCodeTerminal(pluginDestDir);
+
+    // 4. Workspace-specific setup (only if folder open)
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    if (workspaceFolders && workspaceFolders.length > 0) {
+      ensureTeamShareDir(workspaceFolders[0].uri.fsPath);
+    }
 
     // 5. Status bar
     const statusItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 50);
